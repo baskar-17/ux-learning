@@ -91,14 +91,32 @@ main p { margin:0; color:var(--muted); }
   animation:map-drift 16s ease-in-out infinite alternate;
 }
 @keyframes map-drift { to { transform:translate3d(8%,-7%,0); opacity:.6; } }
-.checkpoints { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:32px 8px; padding:0; margin:0; list-style:none; }
+.checkpoint-field { position:relative; padding:0 12px; }
+.checkpoint-track { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.checkpoint-track path { fill:none; stroke-linecap:round; }
+.track-line { stroke:var(--blue-700); stroke-opacity:.42; stroke-width:1.5; }
+.track-pulse { stroke:#087bfb; stroke-width:2; stroke-dasharray:7 93; stroke-dashoffset:7; filter:drop-shadow(0 0 3px #388bff); animation:track-pulse 5s linear infinite; }
+@keyframes track-pulse {
+  0% { stroke-dashoffset:7; opacity:0; }
+  7%, 82% { opacity:.8; }
+  92%, 100% { stroke-dashoffset:-93; opacity:0; }
+}
+.checkpoints { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:32px 8px; padding:0; margin:0; list-style:none; }
 .checkpoints li:nth-child(even) { transform:translateY(12px); }
+@media (min-width:481px) {
+  .checkpoints li:nth-child(5) { grid-area:2 / 4; }
+  .checkpoints li:nth-child(6) { grid-area:2 / 3; }
+  .checkpoints li:nth-child(7) { grid-area:2 / 2; }
+  .checkpoints li:nth-child(8) { grid-area:2 / 1; }
+}
 .checkpoint { display:grid; justify-items:center; align-content:start; gap:8px; width:100%; min-height:104px; padding:4px; border:0; border-radius:6px; background:transparent; text-align:center; }
 .checkpoint-number { display:grid; place-items:center; width:44px; height:44px; border:1px solid #85b8ff; border-radius:12px; background:var(--white); color:var(--blue-900); font-weight:600; font-variant-numeric:tabular-nums; box-shadow:0 2px 6px rgba(9,50,108,.10); transition:background .16s,color .16s,transform .16s; }
 .checkpoint-label { font-size:12px; line-height:16px; font-weight:500; overflow-wrap:anywhere; }
 .checkpoint[aria-current="true"] .checkpoint-number { background:var(--blue-900); border-color:var(--blue-900); color:var(--white); box-shadow:0 0 0 4px rgba(24,104,219,.16); }
-.checkpoint:hover .checkpoint-number { transform:translateY(-2px); }
-.checkpoint-detail { align-self:stretch; display:grid; align-content:center; gap:16px; min-height:280px; padding:24px; background:var(--white); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(9,50,108,.09); }
+.checkpoint:hover .checkpoint-number { border-color:var(--blue-700); }
+.checkpoint-details { display:grid; min-width:0; align-self:stretch; }
+.checkpoint-detail { grid-area:1 / 1; visibility:hidden; align-self:stretch; display:grid; align-content:center; gap:16px; min-height:280px; padding:24px; background:var(--white); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(9,50,108,.09); }
+.checkpoint-detail.is-active { visibility:visible; }
 .checkpoint-detail h3 { margin:4px 0 0; font-size:20px; line-height:24px; font-weight:500; }
 .checkpoint-detail .detail-index { font-size:12px; line-height:16px; font-weight:600; }
 .detail-work { border-top:1px solid var(--border); padding-top:12px; }
@@ -114,13 +132,17 @@ main p { margin:0; color:var(--muted); }
   .checkpoint-map { padding:16px; gap:16px; }
   .checkpoints { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   .checkpoints li:nth-child(even) { transform:none; }
+  .checkpoints li:nth-child(3) { grid-area:2 / 2; }
+  .checkpoints li:nth-child(4) { grid-area:2 / 1; }
+  .checkpoints li:nth-child(7) { grid-area:4 / 2; }
+  .checkpoints li:nth-child(8) { grid-area:4 / 1; }
   .checkpoint { min-height:80px; }
   .checkpoint-detail { padding:16px; }
 }
 @media (prefers-reduced-motion:reduce) {
   .checkpoint-map::after { animation:none; }
   .checkpoint-number { transition:none; }
-  .checkpoint:hover .checkpoint-number { transform:none; }
+  .track-pulse { display:none; }
 }
 .curriculum-notes { border-top:1px solid var(--border); padding-top:16px; }
 .curriculum-notes summary { display:flex; align-items:center; gap:8px; min-height:44px; font-weight:600; width:fit-content; }
@@ -243,20 +265,27 @@ function roadmapContent() {
     <section aria-labelledby="modules-title">
       <h2 id="modules-title">What you’ll learn</h2>
       <div class="checkpoint-map">
-        <ol class="checkpoints" aria-label="Module checkpoints">
-          ${modules.map((module, i) => `<li>
-            <button type="button" class="checkpoint" data-module="${i}" aria-controls="checkpoint-detail">
-              <span class="checkpoint-number">${String(i + 1).padStart(2, '0')}</span>
-              <span class="checkpoint-label">${module.title}</span>
-            </button>
-          </li>`).join('')}
-        </ol>
-        <article class="checkpoint-detail" id="checkpoint-detail" aria-labelledby="checkpoint-title">
-          <div><p class="detail-index"></p><h3 id="checkpoint-title"></h3></div>
-          <p class="detail-skills"></p>
-          <p class="detail-work"><strong>Project work</strong><span></span></p>
-          <a class="course-cta" href="#module-1">Open module ${icon('next')}</a>
-        </article>
+        <div class="checkpoint-field">
+          <svg class="checkpoint-track" aria-hidden="true" focusable="false">
+            <path class="track-line"></path><path class="track-pulse" pathLength="100"></path>
+          </svg>
+          <ol class="checkpoints" aria-label="Module checkpoints">
+            ${modules.map((module, i) => `<li>
+              <button type="button" class="checkpoint" aria-controls="checkpoint-detail-${i + 1}">
+                <span class="checkpoint-number">${String(i + 1).padStart(2, '0')}</span>
+                <span class="checkpoint-label">${module.title}</span>
+              </button>
+            </li>`).join('')}
+          </ol>
+        </div>
+        <div class="checkpoint-details">
+          ${modules.map((module, i) => `<article class="checkpoint-detail" id="checkpoint-detail-${i + 1}" aria-labelledby="checkpoint-title-${i + 1}">
+            <div><p class="detail-index">Module ${i + 1} of ${modules.length}</p><h3 id="checkpoint-title-${i + 1}">${module.title}</h3></div>
+            <p class="detail-skills">${module.skills}</p>
+            <p class="detail-work"><strong>Project work</strong><span>${module.deliverable}</span></p>
+            <a class="course-cta" href="#module-${i + 1}" aria-label="Open module: ${module.title}">Open module ${icon('next')}</a>
+          </article>`).join('')}
+        </div>
       </div>
     </section>
     <section class="curriculum-notes" aria-label="Curriculum references">
@@ -270,37 +299,62 @@ function roadmapContent() {
   </div>`;
 }
 
+function drawCheckpointTrack(field) {
+  const bounds = field.getBoundingClientRect();
+  const points = [...field.querySelectorAll('.checkpoint-number')].map(marker => {
+    const rect = marker.getBoundingClientRect();
+    return [rect.left + rect.width / 2 - bounds.left, rect.top + rect.height / 2 - bounds.top];
+  });
+  let path = 'M ' + points[0].join(' ');
+  for (let i = 1; i < points.length; i++) {
+    const [previousX, previousY] = points[i - 1];
+    const [x, y] = points[i];
+    if (Math.abs(x - previousX) < 1) {
+      const outside = x + (x > bounds.width / 2 ? 44 : -44);
+      const middleY = (previousY + y) / 2;
+      path += ` C ${outside} ${previousY}, ${outside} ${middleY}, ${outside} ${middleY}`;
+      path += ` S ${outside} ${y}, ${x} ${y}`;
+    } else {
+      const middleX = (previousX + x) / 2;
+      path += ` C ${middleX} ${previousY}, ${middleX} ${y}, ${x} ${y}`;
+    }
+  }
+  field.querySelectorAll('.checkpoint-track path').forEach(stroke => stroke.setAttribute('d', path));
+}
+
+let trackObserver;
+
 function initCheckpoints(content) {
-  const buttons = [...content.querySelectorAll('.checkpoint')];
-  const card = content.querySelector('.checkpoint-detail');
-  const cta = card.querySelector('.course-cta');
+  const field = content.querySelector('.checkpoint-field');
+  const buttons = [...field.querySelectorAll('.checkpoint')];
+  const cards = [...content.querySelectorAll('.checkpoint-detail')];
+  let selected = 0;
 
   function select(index) {
-    const module = modules[index];
+    selected = index;
     buttons.forEach((button, i) => {
-      if (i === index) button.setAttribute('aria-current', 'true');
+      const active = i === selected;
+      if (active) button.setAttribute('aria-current', 'true');
       else button.removeAttribute('aria-current');
+      cards[i].classList.toggle('is-active', active);
     });
-    card.querySelector('.detail-index').textContent = 'Module ' + (index + 1) + ' of ' + modules.length;
-    card.querySelector('h3').textContent = module.title;
-    card.querySelector('.detail-skills').textContent = module.skills;
-    card.querySelector('.detail-work span').textContent = module.deliverable;
-    cta.hash = 'module-' + (index + 1);
-    cta.setAttribute('aria-label', 'Open module: ' + module.title);
   }
 
   buttons.forEach((button, index) => {
     button.addEventListener('pointerenter', event => {
-      if (event.pointerType === 'mouse' && !cta.matches(':focus-visible')) select(index);
+      if (event.pointerType === 'mouse' && !cards[selected].querySelector('.course-cta').matches(':focus-visible')) select(index);
     });
     button.addEventListener('focus', () => select(index));
     button.addEventListener('click', () => {
       select(index);
-      cta.focus({preventScroll:true});
-      card.scrollIntoView({block:'nearest'});
+      cards[index].querySelector('.course-cta').focus({preventScroll:true});
+      cards[index].scrollIntoView({block:'nearest'});
     });
   });
   select(0);
+  drawCheckpointTrack(field);
+  trackObserver = new ResizeObserver(() => drawCheckpointTrack(field));
+  trackObserver.observe(field);
 }
 
 function render(focus = false) {
@@ -311,6 +365,7 @@ function render(focus = false) {
   main.querySelector('h1').textContent = title;
   main.querySelector('#page-description').textContent = description;
   const content = main.querySelector('#page-content');
+  trackObserver?.disconnect();
   if (key === 'roadmap') {
     content.innerHTML = roadmapContent();
     initCheckpoints(content);
