@@ -56,6 +56,36 @@ main { padding:40px clamp(16px,5vw,72px); }
 .breadcrumb .icon { width:12px; height:12px; }
 h1 { font-size:29px; line-height:32px; font-weight:600; margin:0 0 8px; }
 main p { margin:0; color:var(--muted); }
+.roadmap { max-width:920px; margin-top:24px; }
+.path-overview { padding:24px; border:1px solid var(--border); border-top:3px solid var(--blue-700); border-radius:8px; background:var(--surface); }
+.roadmap h2 { margin:0 0 8px; font-size:20px; line-height:24px; font-weight:500; }
+.path-overview p { max-width:64ch; }
+.path-facts { display:flex; flex-wrap:wrap; gap:8px 24px; padding:0; margin:16px 0 0; list-style:none; font-size:12px; }
+.path-facts li { color:var(--muted); }
+.path-facts strong { color:var(--text); }
+.roadmap section + section { margin-top:32px; }
+.roadmap-modules { padding:0; margin:0; border:1px solid var(--border); border-radius:8px; list-style:none; }
+.roadmap-modules li + li { border-top:1px solid var(--border); }
+.roadmap-module { display:grid; grid-template-columns:32px minmax(0,1fr) 20px; align-items:start; gap:16px; padding:16px; color:var(--text); text-decoration:none; }
+.roadmap-modules li:first-child a { border-radius:7px 7px 0 0; }
+.roadmap-modules li:last-child a { border-radius:0 0 7px 7px; }
+.roadmap-module:hover { background:var(--surface); }
+.roadmap-module:hover strong { color:var(--blue-800); text-decoration:underline; }
+.step-number { display:grid; place-items:center; height:32px; border-radius:4px; color:var(--blue-900); background:var(--selected); font-weight:600; }
+.module-copy { display:grid; gap:4px; }
+.module-copy strong { font-size:16px; line-height:24px; }
+.module-copy span { color:var(--muted); }
+.module-copy small { color:var(--muted); font-size:12px; line-height:16px; }
+.roadmap-module > .icon { margin-top:6px; color:var(--muted); }
+.curriculum-notes { border-top:1px solid var(--border); padding-top:16px; }
+.curriculum-notes summary { display:flex; align-items:center; gap:8px; min-height:44px; font-weight:600; width:fit-content; }
+.curriculum-notes ul { padding-left:20px; display:grid; gap:8px; }
+.module-plan { display:grid; gap:16px; max-width:640px; }
+.module-plan a { width:fit-content; }
+@media (max-width:480px) {
+  .path-overview { padding:16px; }
+  .roadmap-module { gap:8px; padding:16px 8px; }
+}
 dialog { position:fixed; inset:0 auto 0 0; margin:0; padding:0; border:0; width:min(320px,calc(100% - 32px)); height:100%; max-height:none; max-width:none; background:var(--surface); color:var(--text); }
 dialog[open] { display:flex; flex-direction:column; }
 dialog::backdrop { background:rgb(9 30 66 / 50%); }
@@ -96,7 +126,8 @@ body:has(dialog[open]) { overflow:hidden; }
   <main id="main" tabindex="-1">
     <div class="breadcrumb" aria-label="Current location"></div>
     <h1>Dashboard</h1>
-    <p></p>
+    <p id="page-description"></p>
+    <div id="page-content"></div>
   </main>
 </div>
 <dialog id="drawer" aria-labelledby="drawer-title">
@@ -105,16 +136,27 @@ body:has(dialog[open]) { overflow:hidden; }
 </dialog>
 <script>
 const modules = [
-  'UX foundations and product critique', 'Research and synthesis',
-  'Problem framing and flows', 'Wireframes and interaction',
-  'Visual and responsive UI', 'Components and accessibility',
-  'Prototyping and usability testing', 'Handoff and portfolio'
+  { title: 'UX foundations and product critique', skills: 'Define a user task, identify usability problems, and prioritize what to fix.', deliverable: 'A critique of the clinic booking flow' },
+  { title: 'Research and synthesis', skills: 'Plan interviews, observe behavior, and group findings into themes.', deliverable: 'A research plan and evidence-backed synthesis' },
+  { title: 'Problem framing and flows', skills: 'Frame the problem, explore alternatives, and map the main and recovery paths.', deliverable: 'A problem statement and booking flow' },
+  { title: 'Wireframes and interaction', skills: 'Sketch layout options and wireframe navigation, forms, and error states.', deliverable: 'Low-fidelity booking and rescheduling screens' },
+  { title: 'Visual and responsive UI', skills: 'Use type, spacing, color, and layout to guide attention across screen sizes.', deliverable: 'Mobile and desktop screens' },
+  { title: 'Components and accessibility', skills: 'Design reusable components with states, keyboard behavior, and accessible labels.', deliverable: 'A small component set and accessibility review' },
+  { title: 'Prototyping and usability testing', skills: 'Build a clickable prototype, observe people completing tasks, and iterate.', deliverable: 'A prototype, test findings, and revisions' },
+  { title: 'Handoff and portfolio', skills: 'Specify behavior for developers and explain design decisions with evidence.', deliverable: 'Handoff notes and a portfolio case study' }
+];
+
+const curriculumReferences = [
+  ['University of Michigan', 'User Experience Research and Design', 'https://online.umich.edu/series/user-experience-research-and-design/'],
+  ['Stanford d.school', 'Design Thinking Bootleg', 'https://dschool.stanford.edu/tools/design-thinking-bootleg'],
+  ['Carnegie Mellon HCII', 'User-Centered Research and Evaluation', 'https://www.hcii.cmu.edu/course/user-centered-research-and-evaluation-ucre'],
+  ['Google', 'UX Design Certificate curriculum', 'https://grow.google/certificates/ux-design/']
 ];
 const pages = new Map([
   ['dashboard', ['Dashboard', 'The dashboard is the next build.']],
-  ['roadmap', ['Course roadmap', 'Browse the eight modules in the navigation.']],
+  ['roadmap', ['Course roadmap', 'Go from your first usability critique to a tested design and portfolio case study.']],
   ['resources', ['Resources', 'The resource library will be added with the course content.']],
-  ...modules.map((name, index) => ['module-' + (index + 1), [name, index === 0 ? 'The first lesson, quiz, and clinic booking assignment will be added here.' : 'Lessons and assignments will be added as the course expands.']])
+  ...modules.map(({ title, skills }, index) => ['module-' + (index + 1), [title, skills]])
 ]);
 const icon = (id, extra = '') => '<svg class="icon ' + extra + '" aria-hidden="true"><use href="#' + id + '"/></svg>';
 const navigation = document.querySelectorAll('nav');
@@ -136,11 +178,49 @@ for (const nav of navigation) {
       <p class="group-title">Course outline</p>
       <details open>
         <summary class="nav-row">${icon('book')}Beginner path${icon('next', 'chevron')}</summary>
-        <ol class="nav-list module-list">${modules.map((name, i) =>
+        <ol class="nav-list module-list">${modules.map(({ title }, i) =>
           '<li><a class="nav-row" href="#module-' + (i + 1) + '"><span class="module-number" aria-hidden="true">' +
-          String(i + 1).padStart(2, '0') + '</span>' + name + '</a></li>').join('')}</ol>
+          String(i + 1).padStart(2, '0') + '</span>' + title + '</a></li>').join('')}</ol>
       </details>
     </div>`;
+}
+
+function roadmapContent() {
+  return `<div class="roadmap">
+    <section class="path-overview" aria-labelledby="path-title">
+      <h2 id="path-title">Beginner path</h2>
+      <p>Redesign a fictional clinic booking flow. Each module adds a piece of work you can use in your final case study.</p>
+      <ul class="path-facts">
+        <li><strong>8</strong> modules</li>
+        <li><strong>1</strong> portfolio project</li>
+        <li>No prior design experience required</li>
+      </ul>
+    </section>
+    <section aria-labelledby="modules-title">
+      <h2 id="modules-title">What you’ll learn</h2>
+      <ol class="roadmap-modules">
+        ${modules.map((module, i) => `<li>
+          <a class="roadmap-module" href="#module-${i + 1}">
+            <span class="step-number" aria-hidden="true">${i + 1}</span>
+            <span class="module-copy">
+              <strong>${module.title}</strong>
+              <span>${module.skills}</span>
+              <small><b>Project work</b> · ${module.deliverable}</small>
+            </span>
+            ${icon('next')}
+          </a>
+        </li>`).join('')}
+      </ol>
+    </section>
+    <section class="curriculum-notes" aria-label="Curriculum references">
+      <details>
+        <summary>${icon('next', 'chevron')}Curriculum references</summary>
+        <p>University curricula informed the sequence. The clinic project and assignments are specific to this course.</p>
+        <ul>${curriculumReferences.map(([school, title, url]) =>
+          `<li>${school} · <a href="${url}">${title}</a></li>`).join('')}</ul>
+      </details>
+    </section>
+  </div>`;
 }
 
 function render(focus = false) {
@@ -149,7 +229,20 @@ function render(focus = false) {
   const [title, description] = pages.get(key);
   document.title = title + ' | UI/UX Learning';
   main.querySelector('h1').textContent = title;
-  main.querySelector('p').textContent = description;
+  main.querySelector('#page-description').textContent = description;
+  const content = main.querySelector('#page-content');
+  if (key === 'roadmap') {
+    content.innerHTML = roadmapContent();
+  } else if (key.startsWith('module-')) {
+    const module = modules[Number(key.slice(7)) - 1];
+    content.innerHTML = `<section class="roadmap module-plan" aria-label="Module plan">
+      <p><strong>Project work</strong> · ${module.deliverable}</p>
+      <p>Lessons and assignments are planned for a future release.</p>
+      <a href="#roadmap">Back to course roadmap</a>
+    </section>`;
+  } else {
+    content.replaceChildren();
+  }
   const breadcrumb = main.querySelector('.breadcrumb');
   breadcrumb.replaceChildren(document.createTextNode(key.startsWith('module-') ? 'Beginner path' : 'Workspace'));
   breadcrumb.insertAdjacentHTML('beforeend', icon('next'));
