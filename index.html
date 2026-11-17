@@ -167,6 +167,38 @@ body:has(dialog[open]) { overflow:hidden; }
   .rail { display:none; }
   main { padding:24px 16px; }
 }
+.foundation { max-width:900px; margin-top:24px; }
+.foundation-overview,.foundation-panel { border:1px solid var(--border); border-radius:8px; padding:24px; }
+.foundation-overview { background:var(--surface); border-top:3px solid var(--blue-700); }
+.foundation h2 { font-size:24px; line-height:28px; font-weight:500; margin:0 0 8px; }
+.foundation h3 { font-size:20px; line-height:24px; font-weight:500; margin:0 0 8px; }
+.foundation-progress { display:grid; gap:8px; margin-top:16px; max-width:360px; }
+.foundation-progress progress { width:100%; height:12px; accent-color:var(--blue-700); }
+.foundation-steps { display:flex; gap:8px; flex-wrap:wrap; padding:0; margin:16px 0; list-style:none; }
+.foundation-steps button,.lesson-toggle { min-height:44px; padding:8px 12px; border:1px solid var(--border); border-radius:4px; background:var(--white); }
+.foundation-steps button:hover,.lesson-toggle:hover { background:var(--surface); }
+.foundation-steps button[aria-current="step"] { color:var(--blue-900); background:var(--selected); border-color:var(--blue-700); font-weight:600; }
+.foundation-panel > * + *, .foundation-panel form > * + * { margin-top:16px; }
+.foundation-panel .course-cta { border:0; width:fit-content; }
+.foundation-practice { padding:16px; background:var(--surface); border-left:3px solid var(--blue-700); }
+.foundation-reading,.foundation-example { padding:16px; border:1px solid var(--border); border-radius:4px; }
+.foundation-reading p + p { margin-top:8px; }
+.foundation-example summary { min-height:24px; color:var(--blue-800); font-weight:600; }
+.foundation-example ul,.foundation-panel ol { padding-inline-start:24px; }
+.foundation-panel li + li { margin-top:4px; }
+.foundation-panel fieldset { min-width:0; padding:12px 16px; border:1px solid var(--border); border-radius:4px; }
+.foundation-panel legend { max-width:100%; font-weight:600; }
+.quiz-option { display:flex; align-items:center; gap:8px; min-height:40px; }
+.foundation-panel input[type=radio],.foundation-panel input[type=checkbox] { accent-color:var(--blue-700); }
+.foundation-panel textarea,.foundation-panel select { display:block; width:100%; margin-top:8px; padding:8px; border:1px solid var(--muted); border-radius:4px; background:var(--white); color:var(--text); font:inherit; }
+.foundation-panel textarea { resize:vertical; }
+.foundation-panel textarea:disabled { opacity:.65; }
+.quiz-feedback { margin-top:8px; }
+.foundation-status { min-height:20px; }
+@media (max-width:600px) {
+  .foundation-overview,.foundation-panel { padding:16px; }
+  .foundation-panel fieldset { padding:8px; }
+}
 </style>
 </head>
 <body>
@@ -357,6 +389,321 @@ function initCheckpoints(content) {
   trackObserver.observe(field);
 }
 
+const foundationLessons = [
+  {
+    "title": "Start with the task",
+    "body": "A critique starts by naming who is trying to do what and under which conditions. “The user wants a better booking experience” is too broad. Try “A first-time patient on a phone wants to book a Tuesday morning appointment.” The clinic has a goal too, such as reducing incomplete bookings. A useful critique connects a design decision to both goals and keeps any predicted effect open for testing.",
+    "practice": "Rewrite “Improve the appointments screen” as a user task with a clear end state.",
+    "readings": [
+      [
+        "Read",
+        "Usability 101, Nielsen Norman Group",
+        "https://www.nngroup.com/articles/Usability-101-introduction-to-Usability/",
+        "About 8 minutes for selected sections · public article. Read the definition and the section on users, tasks, and context."
+      ]
+    ]
+  },
+  {
+    "title": "Describe what happened",
+    "body": "Record the task, the exact step, and what the interface showed. Then write your interpretation separately. “The app displayed ‘Something went wrong’ and the selected time disappeared” is an observation. “The patient may think the appointment was confirmed or may abandon the flow” is a hypothesis. A walkthrough gives you issues to investigate. A usability test gives you evidence about how people actually respond.",
+    "practice": "Separate this sentence into an observation and a hypothesis: “The date picker is hidden, so everyone will give up.”",
+    "readings": [
+      [
+        "Read",
+        "10 Usability Heuristics, Nielsen Norman Group",
+        "https://www.nngroup.com/articles/ten-usability-heuristics/",
+        "About 6 minutes for selected sections · public article. Focus on system feedback and helping users recover from errors."
+      ]
+    ]
+  },
+  {
+    "title": "Propose a change and decide how to test it",
+    "body": "Choose a change that addresses the specific issue. Familiar controls and wording can help users transfer knowledge from other products. For example, use an explicit “Confirm appointment” action when the next step creates a booking. Specify what you would observe in a test, such as whether a patient can identify that the slot was lost and select another one without help.",
+    "practice": "Rewrite “Something went wrong” for a slot that became unavailable, and add a next action.",
+    "readings": [
+      [
+        "Read",
+        "Jakob’s Law, Laws of UX",
+        "https://lawsofux.com/jakobs-law/",
+        "About 3 minutes · public article. Identify one familiar pattern you would retain in your proposal."
+      ],
+      [
+        "Optional",
+        "HEY email onboarding, Growth.Design",
+        "https://growth.design/case-studies/hey-user-onboarding",
+        "Interactive case study · free with sign-up. Identify a step where a design decision affects the user’s ability to proceed. The optional case study does not affect course completion."
+      ]
+    ]
+  }
+];
+const foundationQuiz = [
+  [
+    "Which task is easiest to evaluate?",
+    [
+      "Improve the design.",
+      "Book a Tuesday morning appointment on a phone.",
+      "Find the interface appealing."
+    ],
+    1,
+    "Names a task, condition, and outcome."
+  ],
+  [
+    "Which statement is directly observable?",
+    [
+      "Most patients dislike the flow.",
+      "The patient stopped because they were annoyed.",
+      "Selecting Confirm displayed “Something went wrong.”"
+    ],
+    2,
+    "Describes behavior you can record."
+  ],
+  [
+    "A slot disappears during booking. Which change addresses recovery?",
+    [
+      "Explain that the slot is unavailable and show nearby times.",
+      "Make the logo larger.",
+      "Display an error code and close the form."
+    ],
+    0,
+    "Explains the problem and provides a next step."
+  ],
+  [
+    "Which result is useful in a usability test?",
+    [
+      "The team likes the new screen.",
+      "Participants choose another slot without assistance.",
+      "The confirmation button is blue."
+    ],
+    1,
+    "Measures whether users can recover and finish the task."
+  ],
+  [
+    "Which finding should you review first?",
+    [
+      "The footer has uneven spacing.",
+      "A label could be shorter.",
+      "The user cannot tell whether a booking was created and may submit again."
+    ],
+    2,
+    "Has the greatest immediate consequence for the booking."
+  ]
+];
+const foundationRubric = [
+  [
+    "Task and goals",
+    "Goals absent",
+    "Goals are broad or one is missing",
+    "Specific user task and clinic goal"
+  ],
+  [
+    "Evidence",
+    "Findings are opinions",
+    "Some observations lack a step or mix in assumptions",
+    "Both findings cite steps and separate observation from inference"
+  ],
+  [
+    "Prioritization",
+    "No choice made",
+    "A finding is chosen with vague reasoning",
+    "Priority is justified by its consequence for the task"
+  ],
+  [
+    "Recommendation",
+    "No change proposed",
+    "Change is broad or only partially addresses the issue",
+    "Each change directly addresses the stated issue"
+  ],
+  [
+    "Validation",
+    "No test proposed",
+    "Test lacks a task or an observable outcome",
+    "A realistic task and observable success criterion"
+  ]
+];
+
+const foundationStorage = 'ux-learning:foundations:v1';
+
+function readFoundationProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(foundationStorage)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function initFoundations(content) {
+  const saved = readFoundationProgress();
+  const state = {
+    step: Number.isInteger(saved.step) && saved.step >= 0 && saved.step <= 4 ? saved.step : 0,
+    lessons: Array.from({length:3}, (_, i) => saved.lessons?.[i] === true),
+    quiz: Array.isArray(saved.quiz) && saved.quiz.length === 5 &&
+      saved.quiz.every(answer => Number.isInteger(answer) && answer >= 0 && answer <= 2) ? saved.quiz : [],
+    draft: typeof saved.draft === 'string' ? saved.draft : '',
+    revision: typeof saved.revision === 'string' ? saved.revision : '',
+    rubric: Array.from({length:5}, (_, i) => [0,1,2].includes(saved.rubric?.[i]) ? saved.rubric[i] : null)
+  };
+  const steps = ['Task and goals', 'Observe friction', 'Propose and test', 'Knowledge check', 'Clinic critique'];
+  content.innerHTML = `<div class="foundation">
+    <section class="foundation-overview" aria-labelledby="foundation-outcome">
+      <h2 id="foundation-outcome">Write your first UX critique</h2>
+      <p>Use observable evidence to improve a clinic booking flow, then decide how you would test your change.</p>
+      <p><strong>3 lessons · 1 knowledge check · 1 assignment · About 90 minutes</strong></p>
+      <label class="foundation-progress"><span id="foundation-progress-label"></span><progress max="5" value="0"></progress></label>
+    </section>
+    <ol class="foundation-steps" aria-label="Module steps">
+      ${steps.map((name, index) => `<li><button type="button" data-step="${index}">${name}</button></li>`).join('')}
+    </ol>
+    <section class="foundation-panel" aria-labelledby="foundation-step-title"></section>
+    <p class="foundation-status" role="status"></p>
+  </div>`;
+  const panel = content.querySelector('.foundation-panel');
+  const status = content.querySelector('.foundation-status');
+  const stepButtons = [...content.querySelectorAll('[data-step]')];
+
+  function updateProgress() {
+    const assignmentDone = state.draft.trim() && state.revision.trim() && state.rubric.every(n => n !== null);
+    const count = state.lessons.filter(Boolean).length + Number(state.quiz.length > 0) + Number(Boolean(assignmentDone));
+    content.querySelector('progress').value = count;
+    content.querySelector('#foundation-progress-label').textContent = count + ' of 5 steps complete';
+  }
+
+  function save(message = '') {
+    updateProgress();
+    try {
+      localStorage.setItem(foundationStorage, JSON.stringify(state));
+      status.textContent = message;
+    } catch {
+      status.textContent = 'Browser storage is unavailable. Progress is kept until you leave this module.';
+    }
+  }
+
+  function quizFeedback(form) {
+    const score = foundationQuiz.filter((question, index) => state.quiz[index] === question[2]).length;
+    form.querySelector('output').textContent = 'Score: ' + score + ' of ' + foundationQuiz.length;
+    foundationQuiz.forEach(([, options, correct, explanation], index) => {
+      form.querySelectorAll('.quiz-feedback')[index].textContent =
+        (state.quiz[index] === correct ? 'Correct. ' : 'Correct answer: ' + options[correct] + ' ') + explanation;
+    });
+  }
+
+  function showStep(moveFocus = false) {
+    stepButtons.forEach((button, index) => {
+      if (index === state.step) button.setAttribute('aria-current', 'step');
+      else button.removeAttribute('aria-current');
+    });
+    if (state.step < 3) {
+      const lesson = foundationLessons[state.step];
+      panel.innerHTML = `<p>Lesson ${state.step + 1} of 3</p>
+        <h2 id="foundation-step-title" tabindex="-1">${lesson.title}</h2>
+        <p>${lesson.body}</p>
+        <div class="foundation-practice"><strong>Try it</strong><p>${lesson.practice}</p></div>
+        <div class="foundation-reading">${lesson.readings.map(([label, title, url, notes]) =>
+          `<p><strong>${label}</strong> · <a href="${url}" target="_blank" rel="noopener">${title}</a><br>${notes}</p>`).join('')}</div>
+        <button type="button" class="course-cta" data-lesson-complete>${state.lessons[state.step] ? 'Continue' : 'Mark complete and continue'}</button>`;
+    } else if (state.step === 3) {
+      panel.innerHTML = `<h2 id="foundation-step-title" tabindex="-1">Knowledge check</h2>
+        <p>Answer all five questions to see your score and explanations.</p>
+        <form data-quiz>
+          ${foundationQuiz.map(([question, options], index) => `<fieldset>
+            <legend>${index + 1}. ${question}</legend>
+            ${options.map((option, choice) => `<label class="quiz-option"><input type="radio" name="question-${index}" value="${choice}" required ${state.quiz[index] === choice ? 'checked' : ''}> ${option}</label>`).join('')}
+            <p class="quiz-feedback"></p>
+          </fieldset>`).join('')}
+          <button type="submit" class="course-cta">Check answers</button>
+          <output aria-live="polite"></output>
+        </form>`;
+      if (state.quiz.length) quizFeedback(panel.querySelector('form'));
+    } else {
+      panel.innerHTML = foundationAssignment();
+      panel.querySelector('#critique-draft').value = state.draft;
+      panel.querySelector('#critique-revision').value = state.revision;
+      panel.querySelectorAll('[data-rubric]').forEach((select, index) => {
+        select.value = state.rubric[index] ?? '';
+      });
+      updateRubricScore(panel, state.rubric);
+    }
+    if (moveFocus) panel.querySelector('h2').focus();
+  }
+
+  stepButtons.forEach((button, index) => button.addEventListener('click', () => {
+    state.step = index;
+    save();
+    showStep(true);
+  }));
+
+  panel.addEventListener('click', event => {
+    if (!event.target.closest('[data-lesson-complete]')) return;
+    state.lessons[state.step] = true;
+    state.step += 1;
+    save('Lesson marked complete.');
+    showStep(true);
+  });
+
+  panel.addEventListener('submit', event => {
+    if (!event.target.matches('[data-quiz]')) return;
+    event.preventDefault();
+    const answers = new FormData(event.target);
+    state.quiz = foundationQuiz.map((_, index) => Number(answers.get('question-' + index)));
+    quizFeedback(event.target);
+    save();
+  });
+
+  panel.addEventListener('input', event => {
+    const field = event.target;
+    if (field.id === 'critique-draft') state.draft = field.value;
+    else if (field.id === 'critique-revision') state.revision = field.value;
+    else if (field.matches('[data-rubric]')) {
+      state.rubric[Number(field.dataset.rubric)] = field.value === '' ? null : Number(field.value);
+      updateRubricScore(panel, state.rubric);
+    } else return;
+    save('Saved in this browser.');
+  });
+
+  updateProgress();
+  showStep();
+}
+
+function updateRubricScore(panel, ratings) {
+  const count = ratings.filter(n => n !== null).length;
+  panel.querySelector('#rubric-score').textContent = count < ratings.length
+    ? count + ' of ' + ratings.length + ' criteria scored'
+    : 'Self-review score: ' + ratings.reduce((total, rating) => total + rating, 0) + ' of 10';
+}
+
+function foundationAssignment() {
+  return `<h2 id="foundation-step-title" tabindex="-1">Critique a clinic booking flow</h2>
+    <p>A first-time patient wants to book a Tuesday morning appointment on a phone. The clinic wants patients to finish without calling support.</p>
+    <ol>
+      <li>The patient selects Tuesday at 10:00 a.m. and taps <strong>Continue</strong>.</li>
+      <li>They enter contact details and tap <strong>Submit</strong>.</li>
+      <li>The slot became unavailable. The app shows “Something went wrong” and sends the patient back to the start with their details cleared.</li>
+    </ol>
+    <p>Write the patient goal, the clinic goal, and two findings. For each finding, include the step, observation, likely impact, and proposed improvement. Pick a priority, explain why, and add a test task with an observable success criterion.</p>
+    <details class="foundation-example">
+      <summary>Worked example</summary>
+      <ul>
+        <li><strong>Step:</strong> After submitting contact details.</li>
+        <li><strong>Observation:</strong> The generic error gives no indication whether an appointment was created.</li>
+        <li><strong>Likely impact:</strong> A first-time patient may retry because the booking status is unclear.</li>
+        <li><strong>Proposal:</strong> Explain that the time is unavailable and the appointment was not booked. Offer a “Choose another time” action.</li>
+        <li><strong>Test:</strong> Introduce an unavailable slot after submission. Ask participants to continue without prompting.</li>
+        <li><strong>Success:</strong> The participant can explain that no booking exists and select another slot without help.</li>
+      </ul>
+    </details>
+    <div><label for="critique-draft"><strong>Your critique</strong></label><textarea id="critique-draft" rows="8" placeholder="Patient goal, clinic goal, findings, priority, and test"></textarea></div>
+    <h3>Self-review rubric</h3>
+    <p>Score each criterion, then revise your lowest-scoring area and describe what changed.</p>
+    ${foundationRubric.map(([criterion, ...ratings], index) => `<div>
+      <label for="rubric-${index}"><strong>${criterion}</strong></label>
+      <select id="rubric-${index}" data-rubric="${index}">
+        <option value="">Choose a score</option>
+        ${ratings.map((rating, score) => `<option value="${score}">${score} · ${rating}</option>`).join('')}
+      </select>
+    </div>`).join('')}
+    <output id="rubric-score" aria-live="polite"></output>
+    <div><label for="critique-revision"><strong>What did you revise?</strong></label><textarea id="critique-revision" rows="3"></textarea></div>`;
+}
+
 function render(focus = false) {
   const route = location.hash.slice(1);
   const key = pages.has(route) ? route : 'dashboard';
@@ -369,6 +716,8 @@ function render(focus = false) {
   if (key === 'roadmap') {
     content.innerHTML = roadmapContent();
     initCheckpoints(content);
+  } else if (key === 'module-1') {
+    initFoundations(content);
   } else if (key.startsWith('module-')) {
     const module = modules[Number(key.slice(7)) - 1];
     content.innerHTML = `<section class="roadmap module-plan" aria-label="Module plan">
