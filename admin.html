@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manage access | UX Learning Admin</title>
+<style>
+:root{font:14px/1.5 system-ui,sans-serif;color:#172b4d;background:#f7f8f9}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+header{background:#fff;border-bottom:1px solid #dcdfe4;padding:16px 24px}
+header div{max-width:880px;margin:auto;display:flex;justify-content:space-between;gap:16px}
+a{color:#0055cc}
+main{max-width:928px;margin:auto;padding:32px 24px}
+h1{font-size:30px;margin:0 0 8px}h2{font-size:20px;margin:0 0 16px}
+p{margin:8px 0 16px;color:#44546f}
+section{background:#fff;border:1px solid #dcdfe4;border-radius:8px;padding:24px;margin:24px 0}
+form{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,180px) auto;align-items:end;gap:12px}
+label{display:grid;gap:6px;font-weight:600}
+input,select,button{font:inherit;border:1px solid #8590a2;border-radius:4px;min-height:44px;padding:8px 12px;color:inherit;background:#fff}
+button{cursor:pointer;font-weight:600}
+button.primary{background:#1868db;border-color:#1868db;color:#fff}
+button:disabled{opacity:.65;cursor:wait}
+:focus-visible{outline:2px solid #1868db;outline-offset:2px}
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #dcdfe4;overflow-wrap:anywhere}
+li small{display:block;color:#44546f}
+@media(max-width:570px){main,section{padding:16px}form{grid-template-columns:1fr}header{padding:16px}}
+</style>
+</head>
+<body>
+<header><div><strong>UX Learning Admin</strong><a href="/">Learner sign-in</a></div></header>
+<main>
+<h1>Manage access</h1>
+<p id="status" role="status">Checking your session…</p>
+<div id="workspace" hidden>
+<section aria-labelledby="grant-heading">
+<h2 id="grant-heading">Grant access</h2>
+<p>After you grant access, share the learner sign-in link with the recipient. This form does not send an email.</p>
+<form>
+<label>Email address<input type="email" name="email" autocomplete="off" maxlength="254" required></label>
+<label>Role<select name="role"><option value="learner">Learner</option><option value="super_admin">Super admin</option></select></label>
+<button class="primary" type="submit">Grant access</button>
+</form>
+</section>
+<section aria-labelledby="members-heading"><h2 id="members-heading">Accounts and access grants</h2><ul id="members"></ul></section>
+</div>
+</main>
+<script type="module">
+const status = document.querySelector('#status');
+const workspace = document.querySelector('#workspace');
+const form = workspace.querySelector('form');
+const list = workspace.querySelector('#members');
+let client;
+let busy = false;
+
+function renderMembers(members) {
+  list.replaceChildren();
+  for (const member of members) {
+    const row = document.createElement('li');
+    const info = document.createElement('div');
+    const email = document.createElement('strong');
+    email.textContent = member.email + (member.self ? ' (you)' : '');
+    const details = document.createElement('small');
+    details.textContent = (member.role === 'super_admin' ? 'Super admin' : 'Learner') + ' · ' + member.state;
+    info.append(email, details);
+    row.append(info);
+    if (!member.self && member.state !== 'Revoked') {
+      const button = document.createElement('button');
+      button.textContent = 'Revoke';
+      button.setAttribute('aria-label','Revoke access for ' + member.email);
+      button.addEventListener('click', () => {
+        if (window.confirm('Revoke course access for ' + member.email + '?')) {
+          manage({action:'revoke',membership_id:member.id}, 'Access revoked.');
+        }
+      });
+      row.append(button);
+    }
+    list.append(row);
+  }
+}
+
+async function manage(parameters, successMessage = '') {
+  if (busy) return false;
+  busy = true;
+  workspace.querySelectorAll('button').forEach(button => button.disabled = true);
+  try {
+    const {data,error} = await client.rpc('ux_manage_members',parameters);
+    if (error) {
+      if (error.code === '42501') {
+        workspace.hidden = true;
+        list.replaceChildren();
+        status.textContent = 'Sign in with a super-admin account to manage access.';
+      } else {
+        status.textContent = error.code === '22023' ? error.message : 'Could not update access. Please try again.';
+      }
+      return false;
+    }
+    renderMembers(data);
+    workspace.hidden = false;
+    status.textContent = successMessage;
+    return true;
+  } catch {
+    status.textContent = 'The access service could not be reached.';
+    return false;
+  } finally {
+    busy = false;
+    workspace.querySelectorAll('button').forEach(button => button.disabled = false);
+  }
+}
+
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+  const email = form.elements.email.value.trim();
+  const role = form.elements.role.value;
+  if (role === 'super_admin' && !window.confirm('Grant super-admin access to ' + email + '?')) return;
+  if (await manage({action:'grant',target_email:email,target_role:role},'Access granted.')) form.reset();
+});
+
+try {
+  const {createClient} = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm');
+  client = createClient('https://jtgcwjfkelxftjybioyq.supabase.co','sb_publishable_fDjsecIngPu_5VucEp9GcQ_noiTi7-v');
+  const {data,error} = await client.auth.getSession();
+  if (error || !data.session) status.textContent = 'Sign in from the learner page, then return here.';
+  else await manage({action:'list'});
+  client.auth.onAuthStateChange(event => {
+    if (event === 'SIGNED_OUT') location.replace('/');
+  });
+} catch {
+  status.textContent = 'The sign-in service could not be loaded.';
+}
+</script>
+</body>
+</html>
