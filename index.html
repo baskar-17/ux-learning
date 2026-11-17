@@ -64,19 +64,64 @@ main p { margin:0; color:var(--muted); }
 .path-facts li { color:var(--muted); }
 .path-facts strong { color:var(--text); }
 .roadmap section + section { margin-top:32px; }
-.roadmap-modules { padding:0; margin:0; border:1px solid var(--border); border-radius:8px; list-style:none; }
-.roadmap-modules li + li { border-top:1px solid var(--border); }
-.roadmap-module { display:grid; grid-template-columns:32px minmax(0,1fr) 20px; align-items:start; gap:16px; padding:16px; color:var(--text); text-decoration:none; }
-.roadmap-modules li:first-child a { border-radius:7px 7px 0 0; }
-.roadmap-modules li:last-child a { border-radius:0 0 7px 7px; }
-.roadmap-module:hover { background:var(--surface); }
-.roadmap-module:hover strong { color:var(--blue-800); text-decoration:underline; }
-.step-number { display:grid; place-items:center; height:32px; border-radius:4px; color:var(--blue-900); background:var(--selected); font-weight:600; }
-.module-copy { display:grid; gap:4px; }
-.module-copy strong { font-size:16px; line-height:24px; }
-.module-copy span { color:var(--muted); }
-.module-copy small { color:var(--muted); font-size:12px; line-height:16px; }
-.roadmap-module > .icon { margin-top:6px; color:var(--muted); }
+.checkpoint-map {
+  --grid:rgba(24,104,219,.10);
+  position:relative;
+  isolation:isolate;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(248px,32%);
+  align-items:center;
+  gap:24px;
+  padding:24px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:#f4f8ff;
+}
+.checkpoint-map::before,.checkpoint-map::after { content:""; position:absolute; pointer-events:none; z-index:-1; }
+.checkpoint-map::before {
+  inset:0;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:32px 32px;
+  mask-image:linear-gradient(112deg,#000,rgba(0,0,0,.25));
+}
+.checkpoint-map::after {
+  inset:-30%;
+  background:radial-gradient(ellipse at 30% 45%,rgba(89,153,255,.23),transparent 37%),radial-gradient(ellipse at 67% 62%,rgba(89,153,255,.12),transparent 32%);
+  animation:map-drift 16s ease-in-out infinite alternate;
+}
+@keyframes map-drift { to { transform:translate3d(8%,-7%,0); opacity:.6; } }
+.checkpoints { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:32px 8px; padding:0; margin:0; list-style:none; }
+.checkpoints li:nth-child(even) { transform:translateY(12px); }
+.checkpoint { display:grid; justify-items:center; align-content:start; gap:8px; width:100%; min-height:104px; padding:4px; border:0; border-radius:6px; background:transparent; text-align:center; }
+.checkpoint-number { display:grid; place-items:center; width:44px; height:44px; border:1px solid #85b8ff; border-radius:12px; background:var(--white); color:var(--blue-900); font-weight:600; font-variant-numeric:tabular-nums; box-shadow:0 2px 6px rgba(9,50,108,.10); transition:background .16s,color .16s,transform .16s; }
+.checkpoint-label { font-size:12px; line-height:16px; font-weight:500; overflow-wrap:anywhere; }
+.checkpoint[aria-current="true"] .checkpoint-number { background:var(--blue-900); border-color:var(--blue-900); color:var(--white); box-shadow:0 0 0 4px rgba(24,104,219,.16); }
+.checkpoint:hover .checkpoint-number { transform:translateY(-2px); }
+.checkpoint-detail { align-self:stretch; display:grid; align-content:center; gap:16px; min-height:280px; padding:24px; background:var(--white); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(9,50,108,.09); }
+.checkpoint-detail h3 { margin:4px 0 0; font-size:20px; line-height:24px; font-weight:500; }
+.checkpoint-detail .detail-index { font-size:12px; line-height:16px; font-weight:600; }
+.detail-work { border-top:1px solid var(--border); padding-top:12px; }
+.detail-work strong { display:block; color:var(--text); font-size:12px; }
+.course-cta { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:8px 16px; color:var(--white); background:var(--blue-700); border-radius:4px; text-decoration:none; font-weight:600; }
+.course-cta:hover { background:var(--blue-800); }
+.course-cta:active { background:var(--blue-900); }
+@media (max-width:1120px) {
+  .checkpoint-map { grid-template-columns:minmax(0,1fr); }
+  .checkpoint-detail { min-height:0; }
+}
+@media (max-width:480px) {
+  .checkpoint-map { padding:16px; gap:16px; }
+  .checkpoints { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .checkpoints li:nth-child(even) { transform:none; }
+  .checkpoint { min-height:80px; }
+  .checkpoint-detail { padding:16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .checkpoint-map::after { animation:none; }
+  .checkpoint-number { transition:none; }
+  .checkpoint:hover .checkpoint-number { transform:none; }
+}
 .curriculum-notes { border-top:1px solid var(--border); padding-top:16px; }
 .curriculum-notes summary { display:flex; align-items:center; gap:8px; min-height:44px; font-weight:600; width:fit-content; }
 .curriculum-notes ul { padding-left:20px; display:grid; gap:8px; }
@@ -84,7 +129,6 @@ main p { margin:0; color:var(--muted); }
 .module-plan a { width:fit-content; }
 @media (max-width:480px) {
   .path-overview { padding:16px; }
-  .roadmap-module { gap:8px; padding:16px 8px; }
 }
 dialog { position:fixed; inset:0 auto 0 0; margin:0; padding:0; border:0; width:min(320px,calc(100% - 32px)); height:100%; max-height:none; max-width:none; background:var(--surface); color:var(--text); }
 dialog[open] { display:flex; flex-direction:column; }
@@ -198,19 +242,22 @@ function roadmapContent() {
     </section>
     <section aria-labelledby="modules-title">
       <h2 id="modules-title">What you’ll learn</h2>
-      <ol class="roadmap-modules">
-        ${modules.map((module, i) => `<li>
-          <a class="roadmap-module" href="#module-${i + 1}">
-            <span class="step-number" aria-hidden="true">${i + 1}</span>
-            <span class="module-copy">
-              <strong>${module.title}</strong>
-              <span>${module.skills}</span>
-              <small><b>Project work</b> · ${module.deliverable}</small>
-            </span>
-            ${icon('next')}
-          </a>
-        </li>`).join('')}
-      </ol>
+      <div class="checkpoint-map">
+        <ol class="checkpoints" aria-label="Module checkpoints">
+          ${modules.map((module, i) => `<li>
+            <button type="button" class="checkpoint" data-module="${i}" aria-controls="checkpoint-detail">
+              <span class="checkpoint-number">${String(i + 1).padStart(2, '0')}</span>
+              <span class="checkpoint-label">${module.title}</span>
+            </button>
+          </li>`).join('')}
+        </ol>
+        <article class="checkpoint-detail" id="checkpoint-detail" aria-labelledby="checkpoint-title">
+          <div><p class="detail-index"></p><h3 id="checkpoint-title"></h3></div>
+          <p class="detail-skills"></p>
+          <p class="detail-work"><strong>Project work</strong><span></span></p>
+          <a class="course-cta" href="#module-1">Open module ${icon('next')}</a>
+        </article>
+      </div>
     </section>
     <section class="curriculum-notes" aria-label="Curriculum references">
       <details>
@@ -223,6 +270,39 @@ function roadmapContent() {
   </div>`;
 }
 
+function initCheckpoints(content) {
+  const buttons = [...content.querySelectorAll('.checkpoint')];
+  const card = content.querySelector('.checkpoint-detail');
+  const cta = card.querySelector('.course-cta');
+
+  function select(index) {
+    const module = modules[index];
+    buttons.forEach((button, i) => {
+      if (i === index) button.setAttribute('aria-current', 'true');
+      else button.removeAttribute('aria-current');
+    });
+    card.querySelector('.detail-index').textContent = 'Module ' + (index + 1) + ' of ' + modules.length;
+    card.querySelector('h3').textContent = module.title;
+    card.querySelector('.detail-skills').textContent = module.skills;
+    card.querySelector('.detail-work span').textContent = module.deliverable;
+    cta.hash = 'module-' + (index + 1);
+    cta.setAttribute('aria-label', 'Open module: ' + module.title);
+  }
+
+  buttons.forEach((button, index) => {
+    button.addEventListener('pointerenter', event => {
+      if (event.pointerType === 'mouse' && !cta.matches(':focus-visible')) select(index);
+    });
+    button.addEventListener('focus', () => select(index));
+    button.addEventListener('click', () => {
+      select(index);
+      cta.focus({preventScroll:true});
+      card.scrollIntoView({block:'nearest'});
+    });
+  });
+  select(0);
+}
+
 function render(focus = false) {
   const route = location.hash.slice(1);
   const key = pages.has(route) ? route : 'dashboard';
@@ -233,6 +313,7 @@ function render(focus = false) {
   const content = main.querySelector('#page-content');
   if (key === 'roadmap') {
     content.innerHTML = roadmapContent();
+    initCheckpoints(content);
   } else if (key.startsWith('module-')) {
     const module = modules[Number(key.slice(7)) - 1];
     content.innerHTML = `<section class="roadmap module-plan" aria-label="Module plan">
