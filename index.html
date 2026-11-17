@@ -646,6 +646,13 @@ mobile.addEventListener('change', () => {
 const login = document.querySelector('#login');
 const loginForm = login.querySelector('form');
 const loginStatus = login.querySelector('[role="status"]');
+const callbackParams = new URLSearchParams(location.hash.slice(1));
+if (callbackParams.has('error_code') || callbackParams.has('error')) {
+  loginStatus.textContent = callbackParams.get('error_code') === 'otp_expired'
+    ? 'This sign-in link has expired or was already used. Request a new link below.'
+    : 'This sign-in link could not be verified. Request a new link below.';
+  history.replaceState(null, '', location.pathname + location.search);
+}
 const exit = document.querySelector('#sign-out');
 const chrome = [...document.querySelectorAll('.skip, .top, .shell')];
 chrome.forEach(node => node.hidden = true);
