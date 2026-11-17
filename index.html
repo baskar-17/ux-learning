@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Navigation for the UI/UX learning workspace">
-<title>UI/UX Learning</title>
+<title>Sign in | UI/UX Learning</title>
 <style>
 :root {
   --blue-700:#1868db; --blue-800:#0055cc; --blue-900:#09326c;
@@ -199,6 +199,15 @@ body:has(dialog[open]) { overflow:hidden; }
   .foundation-overview,.foundation-panel { padding:16px; }
   .foundation-panel fieldset { padding:8px; }
 }
+[hidden] { display:none !important; }
+.sign-in { margin:clamp(24px,10vh,96px) auto; width:calc(100% - 32px); max-width:440px; display:grid; gap:16px; padding:24px; border:1px solid var(--border); border-top:3px solid var(--blue-700); border-radius:8px; }
+.sign-in p,.sign-in h1 { margin:0; }
+.sign-in form { display:grid; gap:8px; }
+.sign-in input { min-width:0; width:100%; padding:12px; border:1px solid var(--muted); border-radius:4px; font:inherit; }
+.sign-in button,#sign-out { border:none; }
+#sign-out { background:var(--surface); white-space:nowrap; }
+@media (max-width:425px) { .top { gap:4px; } .top-link .icon { display:none; } .brand { gap:4px; font-size:14px; } .top-link { padding:0 4px; } }
+.assignment-brief { white-space:pre-wrap; overflow-wrap:anywhere; }
 </style>
 </head>
 <body>
@@ -211,15 +220,27 @@ body:has(dialog[open]) { overflow:hidden; }
   <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
   <symbol id="next" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
 </svg>
-<a class="skip" href="#main">Skip to content</a>
-<header class="top">
+<a class="skip" hidden href="#main">Skip to content</a>
+<header class="top" hidden>
   <div class="top-start">
     <button class="icon-button menu-trigger" type="button" aria-label="Open navigation" aria-haspopup="dialog" aria-controls="drawer" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#menu"/></svg></button>
     <a class="brand" href="#dashboard"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#book"/></svg></span>UI/UX Learning</a>
   </div>
   <a class="top-link" href="#resources"><svg class="icon" aria-hidden="true"><use href="#resources-icon"/></svg>Resources</a>
+  <button class="top-link" type="button" id="sign-out">Sign out</button>
 </header>
-<div class="shell">
+<section id="login" class="sign-in" aria-labelledby="sign-in-title">
+  <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#book"/></svg></span>
+  <h1 id="sign-in-title">Sign in to UI/UX Learning</h1>
+  <p>Use the email address your administrator invited.</p>
+  <form>
+    <label for="login-email">Email address</label>
+    <input type="email" id="login-email" name="email" autocomplete="email" required>
+    <button class="course-cta" disabled>Send sign-in link</button>
+  </form>
+  <p role="status"></p>
+</section>
+<div class="shell" hidden>
   <aside class="rail"><nav aria-label="Course navigation"></nav></aside>
   <main id="main" tabindex="-1">
     <div class="breadcrumb" aria-label="Current location"></div>
@@ -233,24 +254,15 @@ body:has(dialog[open]) { overflow:hidden; }
   <nav aria-label="Course navigation"></nav>
 </dialog>
 <script>
-const modules = [
-  { title: 'UX foundations and product critique', skills: 'Define a user task, identify usability problems, and prioritize what to fix.', deliverable: 'A critique of the clinic booking flow' },
-  { title: 'Research and synthesis', skills: 'Plan interviews, observe behavior, and group findings into themes.', deliverable: 'A research plan and evidence-backed synthesis' },
-  { title: 'Problem framing and flows', skills: 'Frame the problem, explore alternatives, and map the main and recovery paths.', deliverable: 'A problem statement and booking flow' },
-  { title: 'Wireframes and interaction', skills: 'Sketch layout options and wireframe navigation, forms, and error states.', deliverable: 'Low-fidelity booking and rescheduling screens' },
-  { title: 'Visual and responsive UI', skills: 'Use type, spacing, color, and layout to guide attention across screen sizes.', deliverable: 'Mobile and desktop screens' },
-  { title: 'Components and accessibility', skills: 'Design reusable components with states, keyboard behavior, and accessible labels.', deliverable: 'A small component set and accessibility review' },
-  { title: 'Prototyping and usability testing', skills: 'Build a clickable prototype, observe people completing tasks, and iterate.', deliverable: 'A prototype, test findings, and revisions' },
-  { title: 'Handoff and portfolio', skills: 'Specify behavior for developers and explain design decisions with evidence.', deliverable: 'Handoff notes and a portfolio case study' }
-];
-
+let modules = [];
 const curriculumReferences = [
   ['University of Michigan', 'User Experience Research and Design', 'https://online.umich.edu/series/user-experience-research-and-design/'],
   ['Stanford d.school', 'Design Thinking Bootleg', 'https://dschool.stanford.edu/tools/design-thinking-bootleg'],
   ['Carnegie Mellon HCII', 'User-Centered Research and Evaluation', 'https://www.hcii.cmu.edu/course/user-centered-research-and-evaluation-ucre'],
   ['Google', 'UX Design Certificate curriculum', 'https://grow.google/certificates/ux-design/']
 ];
-const pages = new Map([
+let pages = new Map();
+const buildPages = () => new Map([
   ['dashboard', ['Dashboard', 'The dashboard is the next build.']],
   ['roadmap', ['Course roadmap', 'Go from your first usability critique to a tested design and portfolio case study.']],
   ['resources', ['Resources', 'The resource library will be added with the course content.']],
@@ -263,6 +275,7 @@ const drawer = document.querySelector('dialog');
 const trigger = document.querySelector('.menu-trigger');
 const mobile = matchMedia('(max-width: 767px)');
 
+function buildNavigation() {
 for (const nav of navigation) {
   nav.innerHTML = `
     <div class="group">
@@ -278,9 +291,11 @@ for (const nav of navigation) {
         <summary class="nav-row">${icon('book')}Beginner path${icon('next', 'chevron')}</summary>
         <ol class="nav-list module-list">${modules.map(({ title }, i) =>
           '<li><a class="nav-row" href="#module-' + (i + 1) + '"><span class="module-number" aria-hidden="true">' +
-          String(i + 1).padStart(2, '0') + '</span>' + title + '</a></li>').join('')}</ol>
+          String(i + 1).padStart(2, '0') + '</span>' + escapeHtml(title) + '</a></li>').join('')}</ol>
       </details>
     </div>`;
+}
+
 }
 
 function roadmapContent() {
@@ -305,17 +320,17 @@ function roadmapContent() {
             ${modules.map((module, i) => `<li>
               <button type="button" class="checkpoint" aria-controls="checkpoint-detail-${i + 1}">
                 <span class="checkpoint-number">${String(i + 1).padStart(2, '0')}</span>
-                <span class="checkpoint-label">${module.title}</span>
+                <span class="checkpoint-label">${escapeHtml(module.title)}</span>
               </button>
             </li>`).join('')}
           </ol>
         </div>
         <div class="checkpoint-details">
           ${modules.map((module, i) => `<article class="checkpoint-detail" id="checkpoint-detail-${i + 1}" aria-labelledby="checkpoint-title-${i + 1}">
-            <div><p class="detail-index">Module ${i + 1} of ${modules.length}</p><h3 id="checkpoint-title-${i + 1}">${module.title}</h3></div>
-            <p class="detail-skills">${module.skills}</p>
-            <p class="detail-work"><strong>Project work</strong><span>${module.deliverable}</span></p>
-            <a class="course-cta" href="#module-${i + 1}" aria-label="Open module: ${module.title}">Open module ${icon('next')}</a>
+            <div><p class="detail-index">Module ${i + 1} of ${modules.length}</p><h3 id="checkpoint-title-${i + 1}">${escapeHtml(module.title)}</h3></div>
+            <p class="detail-skills">${escapeHtml(module.skills)}</p>
+            <p class="detail-work"><strong>Project work</strong><span>${escapeHtml(module.deliverable)}</span></p>
+            <a class="course-cta" href="#module-${i + 1}" aria-label="Open module: ${escapeHtml(module.title)}">Open module ${icon('next')}</a>
           </article>`).join('')}
         </div>
       </div>
@@ -325,7 +340,7 @@ function roadmapContent() {
         <summary>${icon('next', 'chevron')}Curriculum references</summary>
         <p>University curricula informed the sequence. The clinic project and assignments are specific to this course.</p>
         <ul>${curriculumReferences.map(([school, title, url]) =>
-          `<li>${school} · <a href="${url}">${title}</a></li>`).join('')}</ul>
+          `<li>${school} · <a href="${url}">${escapeHtml(title)}</a></li>`).join('')}</ul>
       </details>
     </section>
   </div>`;
@@ -389,143 +404,19 @@ function initCheckpoints(content) {
   trackObserver.observe(field);
 }
 
-const foundationLessons = [
-  {
-    "title": "Start with the task",
-    "body": "A critique starts by naming who is trying to do what and under which conditions. “The user wants a better booking experience” is too broad. Try “A first-time patient on a phone wants to book a Tuesday morning appointment.” The clinic has a goal too, such as reducing incomplete bookings. A useful critique connects a design decision to both goals and keeps any predicted effect open for testing.",
-    "practice": "Rewrite “Improve the appointments screen” as a user task with a clear end state.",
-    "readings": [
-      [
-        "Read",
-        "Usability 101, Nielsen Norman Group",
-        "https://www.nngroup.com/articles/Usability-101-introduction-to-Usability/",
-        "About 8 minutes for selected sections · public article. Read the definition and the section on users, tasks, and context."
-      ]
-    ]
-  },
-  {
-    "title": "Describe what happened",
-    "body": "Record the task, the exact step, and what the interface showed. Then write your interpretation separately. “The app displayed ‘Something went wrong’ and the selected time disappeared” is an observation. “The patient may think the appointment was confirmed or may abandon the flow” is a hypothesis. A walkthrough gives you issues to investigate. A usability test gives you evidence about how people actually respond.",
-    "practice": "Separate this sentence into an observation and a hypothesis: “The date picker is hidden, so everyone will give up.”",
-    "readings": [
-      [
-        "Read",
-        "10 Usability Heuristics, Nielsen Norman Group",
-        "https://www.nngroup.com/articles/ten-usability-heuristics/",
-        "About 6 minutes for selected sections · public article. Focus on system feedback and helping users recover from errors."
-      ]
-    ]
-  },
-  {
-    "title": "Propose a change and decide how to test it",
-    "body": "Choose a change that addresses the specific issue. Familiar controls and wording can help users transfer knowledge from other products. For example, use an explicit “Confirm appointment” action when the next step creates a booking. Specify what you would observe in a test, such as whether a patient can identify that the slot was lost and select another one without help.",
-    "practice": "Rewrite “Something went wrong” for a slot that became unavailable, and add a next action.",
-    "readings": [
-      [
-        "Read",
-        "Jakob’s Law, Laws of UX",
-        "https://lawsofux.com/jakobs-law/",
-        "About 3 minutes · public article. Identify one familiar pattern you would retain in your proposal."
-      ],
-      [
-        "Optional",
-        "HEY email onboarding, Growth.Design",
-        "https://growth.design/case-studies/hey-user-onboarding",
-        "Interactive case study · free with sign-up. Identify a step where a design decision affects the user’s ability to proceed. The optional case study does not affect course completion."
-      ]
-    ]
-  }
-];
-const foundationQuiz = [
-  [
-    "Which task is easiest to evaluate?",
-    [
-      "Improve the design.",
-      "Book a Tuesday morning appointment on a phone.",
-      "Find the interface appealing."
-    ],
-    1,
-    "Names a task, condition, and outcome."
-  ],
-  [
-    "Which statement is directly observable?",
-    [
-      "Most patients dislike the flow.",
-      "The patient stopped because they were annoyed.",
-      "Selecting Confirm displayed “Something went wrong.”"
-    ],
-    2,
-    "Describes behavior you can record."
-  ],
-  [
-    "A slot disappears during booking. Which change addresses recovery?",
-    [
-      "Explain that the slot is unavailable and show nearby times.",
-      "Make the logo larger.",
-      "Display an error code and close the form."
-    ],
-    0,
-    "Explains the problem and provides a next step."
-  ],
-  [
-    "Which result is useful in a usability test?",
-    [
-      "The team likes the new screen.",
-      "Participants choose another slot without assistance.",
-      "The confirmation button is blue."
-    ],
-    1,
-    "Measures whether users can recover and finish the task."
-  ],
-  [
-    "Which finding should you review first?",
-    [
-      "The footer has uneven spacing.",
-      "A label could be shorter.",
-      "The user cannot tell whether a booking was created and may submit again."
-    ],
-    2,
-    "Has the greatest immediate consequence for the booking."
-  ]
-];
-const foundationRubric = [
-  [
-    "Task and goals",
-    "Goals absent",
-    "Goals are broad or one is missing",
-    "Specific user task and clinic goal"
-  ],
-  [
-    "Evidence",
-    "Findings are opinions",
-    "Some observations lack a step or mix in assumptions",
-    "Both findings cite steps and separate observation from inference"
-  ],
-  [
-    "Prioritization",
-    "No choice made",
-    "A finding is chosen with vague reasoning",
-    "Priority is justified by its consequence for the task"
-  ],
-  [
-    "Recommendation",
-    "No change proposed",
-    "Change is broad or only partially addresses the issue",
-    "Each change directly addresses the stated issue"
-  ],
-  [
-    "Validation",
-    "No test proposed",
-    "Test lacks a task or an observable outcome",
-    "A realistic task and observable success criterion"
-  ]
-];
-
-const foundationStorage = 'ux-learning:foundations:v1';
+let foundationLessons = [], foundationQuiz = [], foundationRubric = [], foundationBrief = '';
+const foundationStorage = () => 'ux-learning:foundations:v2:' + activeUser;
+const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
+function readingLink(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' ? escapeHtml(url.href) : '#';
+  } catch { return '#'; }
+}
 
 function readFoundationProgress() {
   try {
-    return JSON.parse(localStorage.getItem(foundationStorage)) || {};
+    return JSON.parse(localStorage.getItem(foundationStorage())) || {};
   } catch {
     return {};
   }
@@ -570,7 +461,7 @@ function initFoundations(content) {
   function save(message = '') {
     updateProgress();
     try {
-      localStorage.setItem(foundationStorage, JSON.stringify(state));
+      localStorage.setItem(foundationStorage(), JSON.stringify(state));
       status.textContent = message;
     } catch {
       status.textContent = 'Browser storage is unavailable. Progress is kept until you leave this module.';
@@ -594,19 +485,19 @@ function initFoundations(content) {
     if (state.step < 3) {
       const lesson = foundationLessons[state.step];
       panel.innerHTML = `<p>Lesson ${state.step + 1} of 3</p>
-        <h2 id="foundation-step-title" tabindex="-1">${lesson.title}</h2>
-        <p>${lesson.body}</p>
-        <div class="foundation-practice"><strong>Try it</strong><p>${lesson.practice}</p></div>
+        <h2 id="foundation-step-title" tabindex="-1">${escapeHtml(lesson.title)}</h2>
+        <p>${escapeHtml(lesson.body)}</p>
+        <div class="foundation-practice"><strong>Try it</strong><p>${escapeHtml(lesson.practice)}</p></div>
         <div class="foundation-reading">${lesson.readings.map(([label, title, url, notes]) =>
-          `<p><strong>${label}</strong> · <a href="${url}" target="_blank" rel="noopener">${title}</a><br>${notes}</p>`).join('')}</div>
+          `<p><strong>${escapeHtml(label)}</strong> · <a href="${readingLink(url)}" target="_blank" rel="noopener">${escapeHtml(title)}</a><br>${escapeHtml(notes)}</p>`).join('')}</div>
         <button type="button" class="course-cta" data-lesson-complete>${state.lessons[state.step] ? 'Continue' : 'Mark complete and continue'}</button>`;
     } else if (state.step === 3) {
       panel.innerHTML = `<h2 id="foundation-step-title" tabindex="-1">Knowledge check</h2>
         <p>Answer all five questions to see your score and explanations.</p>
         <form data-quiz>
           ${foundationQuiz.map(([question, options], index) => `<fieldset>
-            <legend>${index + 1}. ${question}</legend>
-            ${options.map((option, choice) => `<label class="quiz-option"><input type="radio" name="question-${index}" value="${choice}" required ${state.quiz[index] === choice ? 'checked' : ''}> ${option}</label>`).join('')}
+            <legend>${index + 1}. ${escapeHtml(question)}</legend>
+            ${options.map((option, choice) => `<label class="quiz-option"><input type="radio" name="question-${index}" value="${choice}" required ${state.quiz[index] === choice ? 'checked' : ''}> ${escapeHtml(option)}</label>`).join('')}
             <p class="quiz-feedback"></p>
           </fieldset>`).join('')}
           <button type="submit" class="course-cta">Check answers</button>
@@ -672,32 +563,18 @@ function updateRubricScore(panel, ratings) {
 
 function foundationAssignment() {
   return `<h2 id="foundation-step-title" tabindex="-1">Critique a clinic booking flow</h2>
-    <p>A first-time patient wants to book a Tuesday morning appointment on a phone. The clinic wants patients to finish without calling support.</p>
-    <ol>
-      <li>The patient selects Tuesday at 10:00 a.m. and taps <strong>Continue</strong>.</li>
-      <li>They enter contact details and tap <strong>Submit</strong>.</li>
-      <li>The slot became unavailable. The app shows “Something went wrong” and sends the patient back to the start with their details cleared.</li>
-    </ol>
-    <p>Write the patient goal, the clinic goal, and two findings. For each finding, include the step, observation, likely impact, and proposed improvement. Pick a priority, explain why, and add a test task with an observable success criterion.</p>
-    <details class="foundation-example">
-      <summary>Worked example</summary>
-      <ul>
-        <li><strong>Step:</strong> After submitting contact details.</li>
-        <li><strong>Observation:</strong> The generic error gives no indication whether an appointment was created.</li>
-        <li><strong>Likely impact:</strong> A first-time patient may retry because the booking status is unclear.</li>
-        <li><strong>Proposal:</strong> Explain that the time is unavailable and the appointment was not booked. Offer a “Choose another time” action.</li>
-        <li><strong>Test:</strong> Introduce an unavailable slot after submission. Ask participants to continue without prompting.</li>
-        <li><strong>Success:</strong> The participant can explain that no booking exists and select another slot without help.</li>
-      </ul>
+    <details class="foundation-example" open>
+      <summary>Assignment brief and worked example</summary>
+      <div class="assignment-brief">${escapeHtml(foundationBrief.split('### Self-assessment')[0]).replace(/^### /gm,'').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')}</div>
     </details>
     <div><label for="critique-draft"><strong>Your critique</strong></label><textarea id="critique-draft" rows="8" placeholder="Patient goal, clinic goal, findings, priority, and test"></textarea></div>
     <h3>Self-review rubric</h3>
     <p>Score each criterion, then revise your lowest-scoring area and describe what changed.</p>
     ${foundationRubric.map(([criterion, ...ratings], index) => `<div>
-      <label for="rubric-${index}"><strong>${criterion}</strong></label>
+      <label for="rubric-${index}"><strong>${escapeHtml(criterion)}</strong></label>
       <select id="rubric-${index}" data-rubric="${index}">
         <option value="">Choose a score</option>
-        ${ratings.map((rating, score) => `<option value="${score}">${score} · ${rating}</option>`).join('')}
+        ${ratings.map((rating, score) => `<option value="${score}">${score} · ${escapeHtml(rating)}</option>`).join('')}
       </select>
     </div>`).join('')}
     <output id="rubric-score" aria-live="polite"></output>
@@ -721,7 +598,7 @@ function render(focus = false) {
   } else if (key.startsWith('module-')) {
     const module = modules[Number(key.slice(7)) - 1];
     content.innerHTML = `<section class="roadmap module-plan" aria-label="Module plan">
-      <p><strong>Project work</strong> · ${module.deliverable}</p>
+      <p><strong>Project work</strong> · ${escapeHtml(module.deliverable)}</p>
       <p>Lessons and assignments are planned for a future release.</p>
       <a href="#roadmap">Back to course roadmap</a>
     </section>`;
@@ -766,8 +643,115 @@ mobile.addEventListener('change', () => {
     main.focus();
   }
 });
-window.addEventListener('hashchange', () => render(true));
-render();
+const login = document.querySelector('#login');
+const loginForm = login.querySelector('form');
+const loginStatus = login.querySelector('[role="status"]');
+const exit = document.querySelector('#sign-out');
+const chrome = [...document.querySelectorAll('.skip, .top, .shell')];
+chrome.forEach(node => node.hidden = true);
+
+let authClient;
+let activeUser;
+let accessRequest = 0;
+let signedIn = false;
+
+function lockCourse() {
+  signedIn = false;
+  activeUser = undefined;
+  modules = [];
+  pages.clear();
+  foundationLessons = foundationQuiz = foundationRubric = [];
+  foundationBrief = '';
+  trackObserver?.disconnect();
+  if (drawer.open) drawer.close();
+  navigation.forEach(nav => nav.replaceChildren());
+  main.querySelector('#page-content').replaceChildren();
+  main.querySelector('#page-description').textContent = '';
+  main.querySelector('h1').textContent = 'Dashboard';
+  main.querySelector('.breadcrumb').replaceChildren();
+  document.title = 'Sign in | UI/UX Learning';
+  chrome.forEach(node => node.hidden = true);
+  login.hidden = false;
+}
+
+async function openCourse(session) {
+  const request = ++accessRequest;
+  if (!session) {
+    lockCourse();
+    return;
+  }
+  if (signedIn && activeUser === session.user.id) return;
+  lockCourse();
+  loginStatus.textContent = 'Checking course access…';
+  const {data, error} = await authClient.rpc('ux_read_course', {course_slug:'ux-foundations'});
+  if (request !== accessRequest) return;
+  if (error || !data?.content) {
+    loginStatus.textContent = error ? 'Course access could not be checked. Try signing in again.' : 'This email does not have course access. Contact your administrator.';
+    return;
+  }
+  activeUser = session.user.id;
+  modules = data.content.modules;
+  ({lessons:foundationLessons,quiz:foundationQuiz,rubric:foundationRubric,assignment:foundationBrief} = data.content.foundations);
+  pages = buildPages();
+  buildNavigation();
+  signedIn = true;
+  render();
+  chrome.forEach(node => node.hidden = false);
+  login.hidden = true;
+  main.focus();
+}
+
+loginForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!authClient) return;
+  const button = loginForm.querySelector('button');
+  button.disabled = true;
+  loginStatus.textContent = 'Sending sign-in link…';
+  try {
+    const email = loginForm.elements.email.value.trim();
+    const {error} = await authClient.auth.signInWithOtp({
+      email, options:{emailRedirectTo:location.origin + location.pathname}
+    });
+    loginStatus.textContent = error ? 'The sign-in link could not be sent. Check your email and try again.' : 'Check your email for a sign-in link.';
+  } catch {
+    loginStatus.textContent = 'The sign-in service is unavailable. Try again shortly.';
+  } finally {
+    button.disabled = false;
+  }
+});
+
+exit.addEventListener('click', async () => {
+  const {error} = await authClient.auth.signOut({scope:'local'});
+  if (error) {
+    window.alert('Sign-out failed. Please try again.');
+    return;
+  }
+  loginForm.reset();
+  loginStatus.textContent = 'Signed out.';
+  loginForm.elements.email.focus();
+});
+
+window.addEventListener('hashchange', () => { if (signedIn) render(true); });
+(async () => {
+  try {
+    const {createClient} = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm');
+    authClient = createClient('https://jtgcwjfkelxftjybioyq.supabase.co','sb_publishable_fDjsecIngPu_5VucEp9GcQ_noiTi7-v');
+    authClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        accessRequest++;
+        lockCourse();
+      } else if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        setTimeout(() => openCourse(session).catch(() => {
+          loginStatus.textContent = 'The course could not be loaded. Try reloading.';
+        }),0);
+      }
+    });
+    loginForm.querySelector('button').disabled = false;
+  } catch {
+    loginStatus.textContent = 'The sign-in service is unavailable. Try reloading.';
+  }
+})();
+
 </script>
 </body>
 </html>
